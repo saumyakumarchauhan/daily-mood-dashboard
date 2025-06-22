@@ -5,49 +5,166 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>🧘 Personal Mood Dashboard</title>
   <style>
+    :root {
+      --bg: #f4f7f9;
+      --fg: #333;
+      --card: #fff;
+    }
+    body.dark {
+      --bg: #121212;
+      --fg: #f1f1f1;
+      --card: #1e1e1e;
+    }
     body {
       font-family: sans-serif;
       padding: 2rem;
-      max-width: 800px;
+      max-width: 850px;
       margin: auto;
-      background-color: #f4f7f9;
-      color: #333;
+      background-color: var(--bg);
+      color: var(--fg);
+      transition: background 0.3s, color 0.3s;
     }
-    h1 {
+    h1, h2 {
       text-align: center;
+    }
+    p.quote {
+      font-style: italic;
+      text-align: center;
+      margin-bottom: 1rem;
+    }
+    button.toggle-btn {
+      position: fixed;
+      top: 1rem;
+      right: 1rem;
+      background: var(--card);
+      color: var(--fg);
+      border: 1px solid #aaa;
+      padding: 0.5rem 1rem;
+      border-radius: 6px;
+      cursor: pointer;
     }
     img {
       width: 100%;
-      max-width: 600px;
+      max-width: 650px;
       margin: 1rem auto;
       display: block;
+      border-radius: 12px;
+      box-shadow: 0 0 8px rgba(0,0,0,0.1);
     }
     pre {
-      background: #fff;
+      background: var(--card);
       padding: 1rem;
       border: 1px solid #ccc;
       overflow-x: auto;
       white-space: pre-wrap;
+      font-size: 0.95rem;
+    }
+    .legend {
+      display: flex;
+      justify-content: space-around;
+      margin: 1rem 0;
+      font-size: 1.1rem;
+    }
+    .stats {
+      background: var(--card);
+      padding: 1rem;
+      margin: 1rem 0;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+    }
+    footer {
+      margin-top: 2rem;
+      text-align: center;
+      color: gray;
+      font-size: 0.9rem;
     }
   </style>
 </head>
 <body>
-  <h1>🧘 Daily Mood Dashboard</h1>
+  <button class="toggle-btn" onclick="toggleDarkMode()">🌙 Toggle Dark Mode</button>
 
-  <h2>📈 Mood Trend Chart</h2>
+  <h1>🧘 Daily Mood Dashboard</h1>
+  <p class="quote" id="daily-quote">🌟 Stay inspired...</p>
+
+  <h2>📈 Mood & Productivity Trend</h2>
   <img src="mood_trend.png" alt="Mood Trend Chart" />
+
+  <div class="legend">
+    <div>😞 Very Low</div>
+    <div>🙁 Low</div>
+    <div>😐 Neutral</div>
+    <div>🙂 Good</div>
+    <div>😄 Great</div>
+  </div>
+
+  <h2>📆 Mood Calendar Heatmap</h2>
+  <img src="mood_calendar.png" alt="Mood Calendar Heatmap" />
+
+  <h2>📊 Weekly Summary</h2>
+  <div class="stats" id="summary">Loading weekly stats...</div>
 
   <h2>📘 Mood Logs</h2>
   <pre id="log-content">Loading log...</pre>
 
   <script>
+    function toggleDarkMode() {
+      document.body.classList.toggle("dark");
+    }
+
+    // Load log
     fetch('log.md')
       .then(res => res.text())
-      .then(text => document.getElementById('log-content').innerText = text)
+      .then(text => {
+        document.getElementById('log-content').innerText = text;
+
+        // 🧠 Weekly stats
+        const lines = text.trim().split('\n').reverse();
+        const last7 = lines.filter(l => l.startsWith("- Mood:")).slice(0, 7);
+
+        let moodScores = { "😞": 1, "🙁": 2, "😐": 3, "🙂": 4, "😄": 5 };
+        let prodScores = { "Low": 1, "Medium": 2, "High": 3 };
+        let moodSum = 0, prodSum = 0, count = 0;
+
+        last7.forEach(line => {
+          const mood = line.match(/Mood:\s*(\S+)/)?.[1];
+          const prod = line.match(/Productivity:\s*(\w+)/)?.[1];
+          if (mood && prod) {
+            moodSum += moodScores[mood] || 3;
+            prodSum += prodScores[prod] || 2;
+            count++;
+          }
+        });
+
+        if (count > 0) {
+          const avgMood = (moodSum / count).toFixed(2);
+          const avgProd = (prodSum / count).toFixed(2);
+          document.getElementById('summary').innerText =
+            `Average Mood Score: ${avgMood} / 5\nAverage Productivity: ${avgProd} / 3 (last 7 days)`;
+        } else {
+          document.getElementById('summary').innerText = "Not enough data yet.";
+        }
+
+        // 🌈 Daily quote
+        const quotes = [
+          "Believe in yourself and all that you are.",
+          "Every day is a new beginning.",
+          "Push harder than yesterday if you want a different tomorrow.",
+          "Happiness is a direction, not a place.",
+          "Discipline is choosing between what you want now and what you want most."
+        ];
+        const today = new Date().getDate();
+        document.getElementById("daily-quote").innerText = "💬 " + quotes[today % quotes.length];
+      })
       .catch(err => {
         document.getElementById('log-content').innerText = "Failed to load log.";
+        document.getElementById('summary').innerText = "No data.";
         console.error(err);
       });
   </script>
+
+  <footer>
+    Prepared by <strong>Saumyakumar Chauhan</strong><br>
+    B.Tech in CSE, IIIT Kota | B.S. in Data Science, IIT Madras
+  </footer>
 </body>
 </html>
