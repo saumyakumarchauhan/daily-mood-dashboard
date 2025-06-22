@@ -25,7 +25,10 @@ jobs:
 
       - name: Update log.md (Saumyakumar Chauhan)
         run: |
+          echo "## Log Entry: $(date)" >> log.md
           echo "- Mood: 🙂 | Productivity: High | Date: $(date -u +'%Y-%m-%d %H:%M:%S UTC')" >> log.md
+          echo "" >> log.md
+
 
       - name: Generate mood plot
         run: python plots/generate_plot.py
