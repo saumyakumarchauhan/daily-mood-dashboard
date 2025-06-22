@@ -35,13 +35,13 @@
   <h1>🧘 Daily Mood Dashboard</h1>
 
   <h2>📈 Mood Trend Chart</h2>
-  <img src="../plots/mood_trend.png" alt="Mood Trend Chart" />
+  <img src="mood_trend.png" alt="Mood Trend Chart" />
 
   <h2>📘 Mood Logs</h2>
   <pre id="log-content">Loading log...</pre>
 
   <script>
-    fetch('../log.md')
+    fetch('log.md')
       .then(res => res.text())
       .then(text => document.getElementById('log-content').innerText = text)
       .catch(err => {
