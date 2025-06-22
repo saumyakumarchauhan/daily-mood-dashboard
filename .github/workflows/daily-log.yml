@@ -1,0 +1,58 @@
+name: Daily Mood Logger with Charts
+
+on:
+  schedule:
+    - cron: '0 5 * * *'
+  workflow_dispatch:
+
+jobs:
+  log:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3
+
+    - name: Append mood log (24f1000666@ds.study.iitm.ac.in)
+      run: |
+        DATE=$(date -u +"%Y-%m-%d")
+        MOODS=("😊 Happy" "😌 Calm" "😐 Okay" "😴 Tired" "😔 Sad" "😄 Excited")
+        ENERGIES=("⚡ High" "⚡ Medium" "⚡ Low")
+        FOCUSES=("🎯 Strong" "🎯 Good" "🎯 Average")
+        QUOTES=(
+          '"Do not wait to strike till the iron is hot; but make it hot by striking." – William B. Sprague'
+          '"Believe you can and you’re halfway there." – Theodore Roosevelt'
+          '"The secret of getting ahead is getting started." – Mark Twain'
+        )
+        MOOD=${MOODS[$RANDOM % ${#MOODS[@]}]}
+        ENERGY=${ENERGIES[$RANDOM % ${#ENERGIES[@]}]}
+        FOCUS=${FOCUSES[$RANDOM % ${#FOCUSES[@]}]}
+        QUOTE=${QUOTES[$RANDOM % ${#QUOTES[@]}]}
+        echo -e "## 🗓️ $DATE\n\n- Mood: $MOOD  \n- Energy: $ENERGY  \n- Focus: $FOCUS  \n- 💬 *$QUOTE*\n\n---\n" >> log.md
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: 3.11
+
+    - name: Install matplotlib
+      run: pip install matplotlib
+
+    - name: Generate mood chart
+      run: python generate_plot.py
+
+    - name: Commit log and chart
+      run: |
+        git config --global user.name "github-actions[bot]"
+        git config --global user.email "github-actions[bot]@users.noreply.github.com"
+        git add log.md plots/*.png
+        git commit -m "📝 Daily log and mood chart update" || echo "No changes"
+        git push
+    
+    - name: Copy log and chart to dashboard
+      run: |
+        mkdir -p docs
+        cp log.md docs/log.md
+        cp plots/mood_trend.png docs/mood_trend.png
+        cp docs/dashboard.html docs/index.html
+
