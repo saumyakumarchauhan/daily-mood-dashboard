@@ -3,7 +3,7 @@ name: Daily Mood Update
 on:
   schedule:
     - cron: '15 4 * * *'  # Runs daily at 04:15 UTC
-  workflow_dispatch:      # Allow manual trigger
+  workflow_dispatch:
 
 jobs:
   update-log:
@@ -21,7 +21,7 @@ jobs:
           python-version: '3.x'
 
       - name: Install dependencies
-        run: pip install matplotlib pandas
+        run: pip install matplotlib pandas calplot
 
       - name: Update log.md (Saumyakumar Chauhan)
         run: |
@@ -42,13 +42,17 @@ jobs:
           echo "- Reflection: \"$RANDOM_QUOTE\"" >> log.md
           echo "" >> log.md
 
-      - name: Generate mood plot
+      - name: Generate mood & productivity plot
         run: python plots/generate_plot.py
+
+      - name: Generate mood calendar heatmap
+        run: python plots/generate_calendar.py
 
       - name: Copy files to docs/
         run: |
           cp log.md docs/
           cp plots/mood_trend.png docs/
+          cp plots/mood_calendar.png docs/
 
       - name: Commit and push changes
         run: |
