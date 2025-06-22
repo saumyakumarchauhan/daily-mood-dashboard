@@ -1,4 +1,5 @@
 import matplotlib.pyplot as plt
+import matplotlib.dates as mdates
 import pandas as pd
 from datetime import datetime
 import os
@@ -36,6 +37,13 @@ if dates and moods:
     plt.ylabel("Mood")
     plt.title("Mood Trend Over Time")
     plt.grid(True)
+
+    # ✅ Fix the x-axis to show actual dates
+    ax = plt.gca()
+    ax.xaxis.set_major_locator(mdates.AutoDateLocator())
+    ax.xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m-%d'))
+    plt.gcf().autofmt_xdate()  # Auto-rotate labels
+
     os.makedirs("plots", exist_ok=True)
     plt.tight_layout()
     plt.savefig("plots/mood_trend.png")
