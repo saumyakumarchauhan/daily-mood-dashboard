@@ -1,34 +1,40 @@
 import pandas as pd
-import calplot
-import os
-from datetime import datetime
 import matplotlib.pyplot as plt
+import calplot
+from datetime import datetime, timezone
+import os
 
+# Read log.md
 if not os.path.exists("log.md"):
     print("log.md not found.")
     exit()
 
-dates, mood_scores = [], []
+dates = []
+mood_scores = []
 
 with open("log.md", "r", encoding="utf-8") as f:
     for line in f:
         if line.startswith("## Log Entry:"):
             timestamp = line.replace("## Log Entry:", "").strip()
             try:
-                current_date = datetime.strptime(timestamp, "%a %b %d %H:%M:%S %Y").date()
+                dt = datetime.strptime(timestamp, "%a %b %d %H:%M:%S %Y")
             except:
-                current_date = datetime.utcnow().date()
+                dt = datetime.now(timezone.utc)
+            dates.append(dt)
         elif "Mood:" in line:
-            mood = line.split("Mood:")[1].split("|")[0].strip()
-            mood_score = {"😞": 1, "🙁": 2, "😐": 3, "🙂": 4, "😄": 5}.get(mood, 3)
-            dates.append(current_date)
-            mood_scores.append(mood_score)
+            mood = line.split("Mood:")[1].split()[0].strip()
+            score = {"😞": 1, "🙁": 2, "😐": 3, "🙂": 4, "😄": 5}.get(mood, 3)
+            mood_scores.append(score)
 
+# Create DataFrame and group by day
 if dates and mood_scores:
     df = pd.DataFrame({"Date": dates, "Mood": mood_scores})
+    df["Date"] = pd.to_datetime(df["Date"]).dt.date  # Strip time part
     df = df.groupby("Date").mean()
+    df.index = pd.to_datetime(df.index)  # Convert to DatetimeIndex
 
-    calplot.calplot(df["Mood"], cmap="YlGnBu", figsize=(10, 4), suptitle="📆 Mood Calendar Heatmap")
+    # Generate and save heatmap
+    calplot.calplot(df["Mood"], cmap="YlGnBu", suptitle="📆 Mood Calendar Heatmap")
     os.makedirs("plots", exist_ok=True)
-    plt.savefig("plots/mood_calendar.png")
+    plt.savefig("plots/mood_calendar.png", bbox_inches="tight")
     plt.close()
