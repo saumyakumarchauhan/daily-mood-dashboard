@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 import calplot
 from datetime import datetime
 import os
+import re
 
 # Ensure log.md exists
 if not os.path.exists("log.md"):
@@ -25,18 +26,23 @@ with open("log.md", "r", encoding="utf-8") as f:
             try:
                 dt = datetime.strptime(timestamp, "%a %b %d %H:%M:%S %Z %Y")
                 current_date = dt.date()
-            except:
+            except Exception as e:
+                print("❌ Error parsing date:", e)
                 current_date = None
+
         elif "- Mood:" in line and current_date:
-            try:
-                mood = line.split("Mood:")[1].split("|")[0].strip()
-                prod = line.split("Productivity:")[1].split("|")[0].strip()
+            mood_match = re.search(r"Mood:\s*([^\|\n]+)", line)
+            prod_match = re.search(r"Productivity:\s*([^\|\n]+)", line)
+
+            if mood_match:
+                mood = mood_match.group(1).strip()
                 mood_score = mood_map.get(mood, 3)
-                prod_score = prod_map.get(prod, 2)
                 mood_entries.append((current_date, mood_score))
+
+            if prod_match:
+                prod = prod_match.group(1).strip()
+                prod_score = prod_map.get(prod, 2)
                 prod_entries.append((current_date, prod_score))
-            except:
-                continue
 
 # Create plots directory
 os.makedirs("plots", exist_ok=True)
@@ -70,5 +76,7 @@ if prod_entries:
     )
     plt.savefig("plots/productivity_calendar.png", bbox_inches="tight")
     plt.close()
+else:
+    print("⚠️ No productivity entries found!")
 
-print("✅ Both heatmaps saved in 'plots/' folder.")
+print("✅ All heatmaps generated in 'plots/' folder.")
