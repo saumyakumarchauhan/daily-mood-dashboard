@@ -9,34 +9,38 @@ if not os.path.exists("log.md"):
     print("log.md not found.")
     exit()
 
-dates = []
-mood_scores = []
+entries = []
+mood_map = {"😞": 1, "🙁": 2, "😐": 3, "🙂": 4, "😄": 5}
 
 with open("log.md", "r", encoding="utf-8") as f:
+    current_date = None
     for line in f:
         if line.startswith("## Log Entry:"):
             timestamp = line.replace("## Log Entry:", "").strip()
             try:
-                dt = datetime.strptime(timestamp, "%a %b %d %H:%M:%S UTC %Y")
+                dt = datetime.strptime(timestamp, "%a %b %d %H:%M:%S %Z %Y")
+                current_date = dt.date()
             except:
-                print(f"❌ Failed to parse date: {timestamp}")
+                current_date = None
+        elif "- Mood:" in line and current_date:
+            try:
+                mood = line.split("Mood:")[1].split("|")[0].strip()
+                score = mood_map.get(mood, 3)
+                entries.append((current_date, score))
+            except:
                 continue
 
-            dates.append(dt)
-        elif "Mood:" in line:
-            mood = line.split("Mood:")[1].split()[0].strip()
-            score = {"😞": 1, "🙁": 2, "😐": 3, "🙂": 4, "😄": 5}.get(mood, 3)
-            mood_scores.append(score)
-
-# Create DataFrame and group by day
-if dates and mood_scores:
-    df = pd.DataFrame({"Date": dates, "Mood": mood_scores})
-    df["Date"] = pd.to_datetime(df["Date"]).dt.date  # Strip time part
+# Build and group DataFrame
+if entries:
+    df = pd.DataFrame(entries, columns=["Date", "Mood"])
     df = df.groupby("Date").mean()
-    df.index = pd.to_datetime(df.index)  # Convert to DatetimeIndex
+    df.index = pd.to_datetime(df.index)
 
-    # Generate and save heatmap
+    # Generate heatmap
     calplot.calplot(df["Mood"], cmap="YlGnBu", suptitle="📆 Mood Calendar Heatmap")
     os.makedirs("plots", exist_ok=True)
     plt.savefig("plots/mood_calendar.png", bbox_inches="tight")
     plt.close()
+    print("✅ mood_calendar.png generated successfully.")
+else:
+    print("⚠️ No mood entries found.")
