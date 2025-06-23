@@ -17,9 +17,11 @@ with open("log.md", "r", encoding="utf-8") as f:
         if line.startswith("## Log Entry:"):
             timestamp = line.replace("## Log Entry:", "").strip()
             try:
-                dt = datetime.strptime(timestamp, "%a %b %d %H:%M:%S %Y")
+                dt = datetime.strptime(timestamp, "%a %b %d %H:%M:%S UTC %Y")
             except:
-                dt = datetime.now(timezone.utc)
+                print(f"❌ Failed to parse date: {timestamp}")
+                continue
+
             dates.append(dt)
         elif "Mood:" in line:
             mood = line.split("Mood:")[1].split()[0].strip()
